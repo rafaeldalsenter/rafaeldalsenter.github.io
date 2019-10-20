@@ -90,9 +90,15 @@ main {
 			font-weight: normal;
 		}
 		.tagline {
-			font-size: 22px;
+			font-size: 20px;
 			margin-top: 17px;
+			margin-bottom: 0;
 			color: #aaa;
+		}
+		.description {
+			font-size: 16px;
+			max-width: 220px;
+			text-align: center;
 		}
 		img {
 			max-width: 150px;
@@ -102,7 +108,7 @@ main {
 .social {
 	list-style-type: none;
 	padding: 0;
-	margin-top: 0;
+	margin-top: 17px;
 	li {
 		float: left;
 		i {
