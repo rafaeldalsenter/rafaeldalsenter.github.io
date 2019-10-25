@@ -5,6 +5,7 @@ description: >
   Graduado em Ciência da Computação, desenvolvedor .NET desde 2011. Prefiro Windows Forms que WPF :p
 show_excerpts: true
 
+url: http://rafaeldalsenter.github.io
 sass:
   sass_dir: _sass
 plainwhite:
@@ -12,6 +13,7 @@ plainwhite:
   tagline: Engenheiro de Software
   date_format: "%b %-d, %Y"
   sitemap: true
+  analytics_id: 'UA-150912686-1'
 
   social_links:
     github:  rafaeldalsenter
