@@ -13,6 +13,7 @@ plainwhite:
   tagline: Engenheiro de Software
   date_format: "%b %-d, %Y"
   sitemap: true
+  disqus_shortname: default
   analytics_id: 'UA-150912686-1'
 
   social_links:

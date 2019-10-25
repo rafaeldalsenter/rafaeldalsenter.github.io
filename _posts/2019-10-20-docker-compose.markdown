@@ -126,7 +126,7 @@ Para confirmar se o load-balance está funcionando, é só dar F5 na página pri
 
 ![Imagem](/assets/images/docker_compose_command_line.png)
 
-Basicamente, tudo que está escrito aqui está nos repositórios [docker-example-app][docker-example-app] e [docker-example-load-balance][docker-example-load-balance]. Se tem algum contribuição, ou algo a enriqueçer no exemplo, fique a vontade para criar um Pull-request.
+Basicamente, tudo que está escrito aqui está nos repositórios [docker-example-app][docker-example-app] e [docker-example-load-balance][docker-example-load-balance]. Se tem algum contribuição, ou algo a enriquecer no exemplo, fique a vontade para criar um Pull-request.
 
 Até a próxima!
 
