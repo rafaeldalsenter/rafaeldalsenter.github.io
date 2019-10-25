@@ -124,7 +124,7 @@ Após isso, o ambiente estará em execução. Na linha de comando, será exibido
 
 Para confirmar se o load-balance está funcionando, é só dar F5 na página principal. A linha de comando em aberto exibirá a iteração em cada contâiner de aplicação, como na imagem abaixo (obs.: Os erros provávelmente são de má implementação da aplicação, porém esse não é o foco do artigo né?):
 
-![Imagem](/assets/images/docker_compose_command_line.png)
+![Imagem](/assets/images/docker_compose_cmd.png)
 
 Basicamente, tudo que está escrito aqui está nos repositórios [docker-example-app][docker-example-app] e [docker-example-load-balance][docker-example-load-balance]. Se tem algum contribuição, ou algo a enriquecer no exemplo, fique a vontade para criar um Pull-request.
 
