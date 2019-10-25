@@ -17,6 +17,7 @@ A aplicação web, está no projeto [docker-example-app][docker-example-app] que
 
 - Aqui não foi focado em boas práticas, simplesmente foi feita uma aplicação Web que insere em um banco de dados (por favor, não me julgue por esse código :p).
 - o Dockerfile da aplicação utiliza a imagem **microsoft/aspnetcore**, porém pode ser utilizado o Dockerfile criado pelo Visual Studio (que builda o projeto e publica o mesmo) sem problema nenhum. Aqui foi optado por essa imagem por ela ter um tamanho menor.
+- O nome do Host do banco de dados está fixo dentro da aplicação (então, se você subir o banco de dados com um contâiner com nome diferente, lembre-se de mudar aqui).
 
 ## SQL Server
 
@@ -53,7 +54,7 @@ Aqui basicamente eu adiciono o Hostname ou IP dos três servidores de aplicaçã
 
 No mesmo projeto onde localiza-se o Nginx, iremos criar o arquivo **docker-compose.yml** que conterá todas as informações para subir essa estrutura. Todos os contâiners utilizarão a mesma rede para que possam se comunicar entre si. Abaixo irei demonstrar separadamente o arquivo docker-compose:
 
-O primeiro service a ser montado, será o banco de dados SQL Server. Note que no docker-compose do mesmo são passados configurações específicas do ambiente do SQL Server (_environments_), no qual eu digo que aceito o EULA e passando a senha do usuário SA.
+O primeiro service a ser montado, será o banco de dados SQL Server. Note que no docker-compose do mesmo é passados configurações específicas do ambiente do SQL Server (_environments_), no qual eu digo que aceito o EULA e passando a senha do usuário SA.
 ```dockerfile
 sqlserver:
     image: mcr.microsoft.com/mssql/server
@@ -119,9 +120,15 @@ docker-compose up
 
 ```
 
-Finalizar
+Após isso, o ambiente estará em execução. Na linha de comando, será exibido a saída de todos os contâiners. Para confirmar se está funcionando, você pode abrir o navegador e acessar http://localhost/. Nesse link abrirá o form padrão da aplicação.
 
+Para confirmar se o load-balance está funcionando, é só dar F5 na página principal. A linha de comando em aberto exibirá a iteração em cada contâiner de aplicação, como na imagem abaixo (obs.: Os erros provávelmente são de má implementação da aplicação, porém esse não é o foco do artigo né?):
 
+![Imagem](/assets/images/docker_compose_command_line.png)
+
+Basicamente, tudo que está escrito aqui está nos repositórios [docker-example-app][docker-example-app] e [docker-example-load-balance][docker-example-load-balance]. Se tem algum contribuição, ou algo a enriqueçer no exemplo, fique a vontade para criar um Pull-request.
+
+Até a próxima!
 
 
 [docker-example-app]: https://github.com/rafaeldalsenter/docker-example-app
