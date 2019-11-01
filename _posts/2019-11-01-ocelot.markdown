@@ -2,7 +2,7 @@
 layout: post
 title:  "Ocelot: API Gateway em C# - ReRoutes e Aggregates"
 date:   2019-11-01
-categories: Csharp Ocelot Netcore3
+categories: Csharp Ocelot
 ---
 Ultimamente tenho feito alguns testes com o API Gateway Ocelot, e vou descrever aqui alguns exemplos de uso. Neste primeiro artigo descreverei as funcionalidades **ReRoutes** e **Aggregates**.
 
