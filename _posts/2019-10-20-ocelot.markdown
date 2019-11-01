@@ -1,8 +1,0 @@
----
-layout: post
-title:  "Ocelot: API Gateway em C#"
-date:   2019-10-20
-categories: Csharp Ocelot Netcore3
----
-Em breve escreverei sobre testes do API Gateway Ocelot :)
-

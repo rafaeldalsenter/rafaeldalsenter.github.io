@@ -1,0 +1,160 @@
+---
+layout: post
+title:  "Ocelot: API Gateway em C# - ReRoutes e Aggregates"
+date:   2019-11-01
+categories: Csharp Ocelot Netcore3
+---
+Ultimamente tenho feito alguns testes com o API Gateway Ocelot, e vou descrever aqui alguns exemplos de uso. Neste primeiro artigo descreverei as funcionalidades **ReRoutes** e **Aggregates**.
+
+Para isso, utilizaremos o repositório de exemplo [ocelot-example-project](https://github.com/rafaeldalsenter/ocelot-example-project). Nesta solution simularemos o seguinte cenário (PS.: meu forte não é desenho):
+
+![Imagem](/assets/images/ocelot_example_project.png){: .image-post}
+
+A estrutura é composta pelos seguintes componentes:
+- Dois Microservices que retornam o preço e a validade do Produto. Os Gets de ambos retornam informações aleatórias, somente para exemplo. Esses dois microservices são em .NET Core 3.
+- Microservice de Gateway, que terá o Ocelot implementado. Esse componente terá a responsabilidade de receber as requisições externas e fazer o roteamento para os dois microservices de preço e validade. Esse Microservice teve que ser escrito em .NET Core 2.0, pois o Ocelot ainda não funciona no 3.0 (Vide esse [Pull-request](https://github.com/ThreeMammals/Ocelot/pull/1025))
+- Microservice de autenticação, a idéia é fazer em um exemplo futuro todas as rotas validarem se o cliente pode ser autenticado por aqui. Por enquanto, esse projeto não será utilizado.
+
+Para subir todo esse ambiente, faço através de um arquivo [docker-compose](https://github.com/rafaeldalsenter/ocelot-example-project/blob/master/Ocelot.Example/docker-compose.yml), onde irei subir as três aplicações (Microservices de validade e preço e o Gateway) na mesma rede. Para isso, cada "serviço" desse docker-compose utilizará um porta diferente, sendo Gateway 7000, Ms de Preço 7001 e Ms de validade 7002.
+
+### Montagem do API Gateway
+
+Para montagem do projeto API Gateway, criaremos um novo projeto Web vazio em ASP.NET Core. Após instalarmos o Nuget Ocelot no projeto, serão necessários algumas configurações:
+
+Primeiramente, criaremos um arquivo **configuration.json** na raiz do projeto. Aqui basicamente ficarão todas as configurações específicas do Ocelot. Após isso, faremos algumas alterações nas "classes base" do projeto:
+
+**Program.cs**
+
+Neste arquivo, apontaremos o arquivo **configuration.json** na criação do WebHostBuilder:
+
+```csharp
+public class Program
+{
+    public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+        WebHost.CreateDefaultBuilder(args)
+            .ConfigureAppConfiguration(ic => ic.AddJsonFile("configuration.json"))
+            .UseStartup<Startup>();
+
+    public static void Main(string[] args)
+    {
+        CreateWebHostBuilder(args).Build().Run();
+    }
+}
+```
+
+**Startup.cs**
+
+Aqui nós iremos adicionar o Ocelot ao **ServicesCollection** da aplicação. Além disso, também adicionaremos no **ApplicationBuilder** o **UseOcelot**:
+
+```csharp
+public class Startup
+{
+    private readonly IConfiguration _configuration;
+
+    public Startup(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddOcelot(_configuration);
+    }
+
+    public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+    {
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+        }
+
+        app.UseOcelot().Wait();
+    }
+}
+```
+
+Ok, agora temos a aplicação Gateway montada. Vamos criar as configurações para o Gateway:
+
+**ReRoutes**
+
+A configuração **ReRoutes** fará o direcionamento das requisições para os Microservices que contenham as informações (no nosso caso, Preço e validade de produto). Criaremos dois objetos de rota, um para cada Microservice.
+
+Propriedades de uma rota:
+- DownstreamPathTemplate, DownstreamScheme e DownstreamHostAndPorts definem a URL que o Gateway terá que procurar. Nesse caso nos Microservices de Preço e Validade.
+- UpstreamHttpMethod, UpstreamPathTemplate definem a URL que o Gateway irá expor para receber as requisições. Aqui eu defino o caminho e quais verbos Http são suportados.
+- Key é simplesmente um identificador daquele Route. Será utilizado posteriormente em outras funcionalidades que demonstrarei do Ocelot.
+
+O nosso arquivo ficará assim:
+
+```json
+{
+  "ReRoutes": [
+    {
+      "DownstreamPathTemplate": "/precodoproduto",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "container-ms-preco",
+          "Port": 80
+        }
+      ],
+      "UpstreamHttpMethod": [ "Get", "Post", "Put" ],
+      "UpstreamPathTemplate": "/precodoproduto",
+      "Key": "preco"
+    },
+    {
+      "DownstreamPathTemplate": "/validadedoproduto",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "container-ms-validade",
+          "Port": 80
+        }
+      ],
+      "UpstreamPathTemplate": "/validadedoproduto",
+      "UpstreamHttpMethod": [ "Get" ],
+      "Key": "validade"
+    }
+  ],
+  "GlobalConfiguration": {}
+}
+```
+
+Com essa configuração, já podemos subir as aplicações (utilizando o arquivo docker-compose). Após subir os contêiners, se acessarmos o endereço do Gateway (porta 7000), ele já redirecionará as rotas para o Microservice correspondente:
+
+![Imagem](/assets/images/ocelot_site2.png)
+
+Para confirmar, podemos também acessar a rota do Microservice diretamente (neste caso porta 7001):
+
+![Imagem](/assets/images/ocelot_site1.png)
+
+
+**Aggregates**
+
+A configuração **Aggregates** é util caso eu desejar, em uma requisição para o Gateway, fazer várias requisições diferentes e agrupar o resultado de ambas.
+
+Para ficar mais claro, vamos fazer o seguinte exemplo, suponhamos que eu queira criar uma rota **/produto** que me retorne o preço e a validade do mesmo. Sem gateway, eu teria que criar um novo controller ou até um novo Microservice para isto. Com o **Aggregate** criaremos uma rota **/produto** que me retorne o preço e validade do produto, ou seja, o Gateway somará os resultados da requisição ao Microservice de Preço e Validade do produto. Para configurar é bem simples:
+
+```json
+{
+  "ReRoutes": [ ... ],
+  "Aggregates": [
+    {
+      "ReRouteKeys": [
+        "validade",
+        "preco"
+      ],
+      "UpstreamPathTemplate": "/produto"
+    }
+  ],
+  "GlobalConfiguration": {}
+}
+```
+
+Agora, se subirmos o ambiente novamente, e tentarmos acessar o Gateway na rota **/produto** ele me retornará o resultado das duas requisições:
+
+![Imagem](/assets/images/ocelot_site3.png)
+
+Ambos exemplos estão sendo implementados no repositório [ocelot-example-project](https://github.com/rafaeldalsenter/ocelot-example-project). Nos próximos artigos pretendo escrever sobre DelegatingHandlers e outras funcionalidades do Ocelot.
+
+Até +

@@ -5,7 +5,7 @@ date:   2019-10-20
 categories: Docker Nginx SQLServer
 ---
 
-Neste artigo, vou demonstrar o uso do docker-compose em um ambiente mais próximo de uma aplicação real. Aqui teremos uma aplicação web simples (que somente faz insert em um banco de dados), o banco de dados em si e um servidor Nginx.
+Neste artigo, vou demonstrar o uso do arquivo docker-compose em um ambiente mais próximo de uma aplicação real. Aqui teremos uma aplicação web simples (que somente faz insert em um banco de dados), o banco de dados em si e um servidor Nginx.
 
 Replicaremos o servidor da aplicação em três containers para que o Nginx possa atuar como Load balance. Na imagem abaixo, poderemos ver detalhadamente o desenho da infra-estrutura a ser criada:
 
@@ -126,9 +126,9 @@ Para confirmar se o load-balance está funcionando, é só dar F5 na página pri
 
 ![Imagem](/assets/images/docker_compose_cmd.png)
 
-Basicamente, tudo que está escrito aqui está nos repositórios [docker-example-app][docker-example-app] e [docker-example-load-balance][docker-example-load-balance]. Se tem algum contribuição, ou algo a enriquecer no exemplo, fique a vontade para criar um Pull-request.
+Basicamente, tudo que está escrito aqui está nos repositórios [docker-example-app][docker-example-app] e [docker-example-load-balance][docker-example-load-balance]. Se tem algum contribuição, ou algo a enriquecer no exemplo, fique a vontade para criar um Pull-request ou descrever nos comentários :)
 
-Até a próxima!
+Até +
 
 
 [docker-example-app]: https://github.com/rafaeldalsenter/docker-example-app
