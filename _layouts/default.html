@@ -8,15 +8,19 @@
 		<section class="about">
 			<img src="{{ "/assets/perfil.png" | relative_url }}" alt="{{ site.plainwhite.name }}">
 			<h2>{{ site.plainwhite.name }}</h2>
-			<p class="tagline">{{ site.plainwhite.tagline }}</p>
+			<!-- <p class="tagline">{{ site.plainwhite.tagline }}</p> -->
 			<p class="description">{{ site.description }}</p>
+			<a href="http://rafaeldalsenter.github.io">Início</a>
 			<ul class="social">
                 {%- if site.plainwhite.social_links.github -%}
-				<a href="https://github.com/{{ site.plainwhite.social_links.github }}"><li><i class="icon-github-circled"></i></li></a>
+				<a href="https://github.com/{{ site.plainwhite.social_links.github }}"><li><i class="icon-github-circled-1"></i></li></a>
                 {%- endif -%}
                 {%- if site.plainwhite.social_links.linkedIn -%}
 				<a href="https://www.linkedin.com/{{ site.plainwhite.social_links.linkedIn }}"><li><i class="icon-linkedin-squared"></i></li></a>
-                {%- endif -%}
+				{%- endif -%}
+				{%- if site.plainwhite.social_links.instagram -%}
+				<a href="https://www.instagram.com/rafaeldals"><li><i class="icon-instagram-1"></i></li></a>
+				{%- endif -%}
 			</ul>
 			<p>&copy; 2019</p>
 		</section>
