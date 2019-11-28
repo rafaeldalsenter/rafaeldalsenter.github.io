@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Ocelot: API Gateway em C# - ReRoutes e Aggregates"
+title:  "Ocelot: API Gateway em C# I - ReRoutes e Aggregates"
 date:   2019-11-01
 categories: Csharp Ocelot
 ---
@@ -128,6 +128,7 @@ Para confirmar, podemos também acessar a rota do Microservice diretamente (nest
 
 ![Imagem](/assets/images/ocelot_site1.png)
 
+[Documentação oficial do ReRoute](https://ocelot.readthedocs.io/en/latest/features/routing.html)
 
 **Aggregates**
 
@@ -154,6 +155,8 @@ Para ficar mais claro, vamos fazer o seguinte exemplo, suponhamos que eu queira 
 Agora, se subirmos o ambiente novamente, e tentarmos acessar o Gateway na rota **/produto** ele me retornará o resultado das duas requisições:
 
 ![Imagem](/assets/images/ocelot_site3.png)
+
+[Documentação oficial do Aggregates](https://ocelot.readthedocs.io/en/latest/features/requestaggregation.html)
 
 Ambos exemplos estão sendo implementados no repositório [ocelot-example-project](https://github.com/rafaeldalsenter/ocelot-example-project). Nos próximos artigos pretendo escrever sobre DelegatingHandlers e outras funcionalidades do Ocelot.
 

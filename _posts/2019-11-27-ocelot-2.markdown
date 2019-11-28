@@ -1,0 +1,111 @@
+---
+layout: post
+title:  "Ocelot: API Gateway em C# II - Delegating handlers"
+date:   2019-11-27
+categories: Csharp Ocelot
+---
+Dando continuidade aos testes do API gateway Ocelot, agora irei abordar uma outra funcionalidade, o **Delegating handler**.
+
+[Veja o primeiro artigo aqui](http://rafaeldalsenter.github.io/csharp/ocelot/2019/11/01/ocelot.html)
+
+Como o próprio nome diz, basicamente os **Delegating handlers** são manipuladores da mensagem. As requisições e os retornos passam pelos mesmos. Com o Ocelot podemos implementar o mesmo e criar personalizações.
+
+Ele pode ser utilizado para interceptar qualquer requisição e fazer uma validação, por exemplo, ou até colocar algum log para monitoramento. 
+
+No exemplo que vou demonstrar aqui, vou representar o uso de um **Delegating handler** para validar que somente requisições com "Ids" específicos sejam realizadas. Se não contiver o ID específico ou não for preenchido, retornará uma BadRequest. É como se fosse uma "blacklist" de Ids.
+
+Primeiramente, iremos criar uma classe, chamada **BlackListHandler** que herdará da classe **DelegatingHandler** (da biblioteca System.Net.Http) e implementaremos o método **SendAsync**. Nessa classes implementaremos o que for necessário validar:
+
+```csharp
+public class BlackListHandler : DelegatingHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        return base.SendAsync(request, cancellationToken);
+    }
+}
+```
+Após criar a classe, iremos no Startup.cs do projeto e adicionaremos a classe no **ConfigureServices**, para que o Ocelot construa essa classe na aplicação:
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services
+        .AddOcelot(_configuration)
+        .AddDelegatingHandler<BlackListHandler>(true);
+}
+```
+Agora, precisamos configurar o Ocelot, para considerar esse DelegatingHandler em todas as requisições. Para isso iremos adicionar no arquivo configuration.json uma nova chave chamada **DelegatingHandlers**, onde passaremos o nome da classe:
+
+```json
+{
+  "ReRoutes": [...],
+  "Aggregates": [...],
+  "DelegatingHandlers": [
+    "BlackListHandler"
+  ],
+  "GlobalConfiguration": {}
+}
+```
+
+Com o que temos implementado até aqui, todas as requisições configuradas no configuration.json deverão passar pelo BlackListHandler. Para confirmar, podemos adicionar no método **SendAsync** uma escrita em console. Coloquei o texto "Requisição" e subi meu ambientes (subi via docker-compose, conforme demonstrado no primeiro artigo sobre Ocelot). Assim, ao ir no navegador no link [http://localhost:7000/precodoproduto](http://localhost:7000/precodoproduto), podemos ver no console do docker:
+
+![Imagem](/assets/images/ocelot_2_log.png)
+
+Bom, agora vamos adicionar uma validação no Delegating handler. Para isso, implementei o trecho de código abaixo:
+
+```csharp
+public class BlackListHandler : DelegatingHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        request.Headers.TryGetValues("CLIENT_ID", out var values);
+        var clientId = values?.FirstOrDefault();
+
+        if (clientId is null)
+        {
+            return ReturnBadRequest("Request bloqueada por falta de informações");
+        }
+
+        if (_blackList.Any(x => x.Equals(clientId)))
+        {
+            return ReturnBadRequest("Request bloqueada pela BlackList");
+        }
+
+        return base.SendAsync(request, cancellationToken);
+    }
+
+    private Task<HttpResponseMessage> ReturnBadRequest(string message) =>
+        Task.Factory.StartNew(() =>
+            new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent(message)
+            });
+
+    private List<string> _blackList => new List<string>
+    {
+        "CLIENT1",
+        "CLIENT3"
+    };
+}
+```
+
+Basicamente, o que será feito é validado se no cabeçalho da requisição é passado o parâmetro **CLIENT_ID**, e se esse ID está em uma "blacklist". Caso entre em uma das condições anteriores, a requisição já será barrada ali. Agora, com essa implementação vamos subir o ambiente e testar:
+
+![Imagem](/assets/images/ocelot_2_teste1.png)
+
+Como podemos ver, o retorno é o esperado, pois não estamos passando o parâmetro no cabeçalho. Agora vamos testar passando o valor no cabeçalho utilizando o plugin do Chrome Modheader. Este plugin permite adicionar parâmetros nas requisições via navegador:
+
+Passando um "Id" que não está na "blacklist":
+
+![Imagem](/assets/images/ocelot_2_teste2.png)
+
+Passando um "Id" que está na "blacklist":
+
+![Imagem](/assets/images/ocelot_2_teste3.png)
+
+Claro que o exemplo demonstrado é meramente ilustrativo, até porque um cabeçalho pode ser facilmente manipulado antes da requisição. Creio que o uso mais frequente dessa funcionalidade seria a escrita de Logs. A feature foi solicitada através deste [Pull-request](https://github.com/ThreeMammals/Ocelot/issues/208). Lembrando que o exemplo demonstrado aqui, está neste [repositório do Github](https://github.com/rafaeldalsenter/ocelot-example-project).
+
+[Documentação oficial de Delegating handlers](https://ocelot.readthedocs.io/en/latest/features/delegatinghandlers.html)
+
+Até +
