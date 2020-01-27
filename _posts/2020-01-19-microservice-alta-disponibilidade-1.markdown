@@ -4,9 +4,9 @@ title:  "Criando um microservice de alta disponibilidade em C# com banco de dado
 date:   2020-01-19
 categories: Csharp Cassandra AWS
 ---
-Neste primeiro artigo do ano, irei descrever a criação de um Microservice projetado para ter alta disponibilidade, utilizando .NET Core em conjunto a um banco de dados NoSQL Cassandra.
+Nos primeiros artigos do ano, irei descrever a criação de um Microservice projetado para ter alta disponibilidade, utilizando .NET Core em conjunto a um banco de dados NoSQL Cassandra. Inicialmente, iremos focar em subir o banco Cassandra e interagir com ele.
 
-Nesta primeira parte, irei focar na criação do banco de dados Cassandra. Subirei o mesmo em containers Docker e criarei a estrutura base, que contém uma tabela com um [dataset](https://www.kaggle.com/shivamb/netflix-shows/data#) obtido no Kaggle.
+Subirei o mesmo em containers Docker e criarei a estrutura base, que contém uma tabela com um [dataset](https://www.kaggle.com/shivamb/netflix-shows/data#) obtido no Kaggle.
 
 ### Banco de dados Cassandra
 
@@ -16,27 +16,33 @@ Por ter uma arquitetura distribuída e descentralizada, o Cassandra é altamente
 
 Bem, isso foi uma visão bem básica do funcionamento do Cassandra, há outras especificidades como o uso de chave-valor, arquitetura em anel, etc.. No DevMedia, há um [artigo](https://www.devmedia.com.br/introducao-ao-cassandra/38377) que explica bem detalhadamente o funcionamento do Cassandra.
 
-### Subindo os contâiners do banco de dados
+### Subindo o contâiner do banco de dados
 
-Como já dito anteriormente, irei trabalhar inicialmente com o banco Cassandra em contâiners Docker. Irei montar um ambiente bem básico, onde subirei dois contâiners Cassandra, que serão dois nós. Serão eles o container-db e o container-db2.
+Como já dito anteriormente, irei trabalhar inicialmente com o banco Cassandra em contâiner Docker. Irei montar um ambiente bem básico, onde subirei um contâiner Cassandra, que será o único nó, chamado de container-db.
 
-Antes de tudo, irei criar uma rede específica para subir os dois contâiners
+Antes de tudo, irei criar uma rede específica para subir o contâiner.
 
 ```bash
 docker network create -d bridge cassandra-network
 ```
 
-Com a rede criada irei subir dois contâiners a partir da imagem do Cassandra disponível no [DockerHub](https://hub.docker.com/_/cassandra). Lembrando que o segundo contâiner terá um parâmetro extra passado. O parâmetro indicará que o primeiro contâiner será o nó ligado a ele.
+Com a rede criada irei subir o contâiner a partir da imagem do Cassandra disponível no [DockerHub](https://hub.docker.com/_/cassandra). Lembrando que o segundo contâiner terá um parâmetro extra passado. O parâmetro indicará que o primeiro contâiner será o nó ligado a ele.
 
 ```bash
-docker run --name cassandra-db --network cassandra-network -d cassandra
+docker run --name cassandra-db --network cassandra-network -p 7000:7000 -p 9042:9042 -d cassandra
+```
 
+Como a idéia aqui, é montar o banco de dados para fins de desenvolvimento, irei montar somente um container com o nó do banco de dados. Em um ambiente de produção, o ideal é ter uma quantidade de nós compatíveis com a demanda de uso do mesmo.
+
+Se, por exemplo, eu quisesse subir um segundo nó, eu poderia lançar o seguinte comando (lembrando que teria que ser determinados as portas a fim de não conflitarem com o container anterior):
+
+```bash
 docker run --name cassandra-db2 -d --network cassandra-network -e CASSANDRA_SEEDS=cassandra-db cassandra
 ```
 
 ### Inserindo dados no banco
 
-Beleza, agora já temos o banco de dados Cassandra "de pé" com dois nós. Para interagirmos com ele utilizamos a linguagem CQL. Esta linguagem é exclusiva do banco Cassandra e é muito semelhante ao tradicional SQL, assim é familiar para quem (como eu) vem do mundo dos bancos relacionais.
+Beleza, agora já temos o banco de dados Cassandra "de pé" com um nó. Para interagirmos com ele utilizamos a linguagem CQL. Esta linguagem é exclusiva do banco Cassandra e é muito semelhante ao tradicional SQL, assim é familiar para quem (como eu vem do mundo dos bancos relacionais.
 
 Iremos inicialmente criar um Keyspace, que é onde serão armazenados as tabelas. Para lançar comandos no Cassandra, teremos que abrir a linha de comando do contâiner Docker. Passando o parâmetro cqlsh já iremos abrir com o bash para execuções de queries CQL:
 
@@ -44,10 +50,10 @@ Iremos inicialmente criar um Keyspace, que é onde serão armazenados as tabelas
 docker exec -it cassandra-db cqlsh
 ```
 
-Para criar o Keyspace utilizaremos o comando abaixo. nele passaremos dois parâmetros, o primeiro indica o método de replicação que será utilizado para distribuir as réplicas das partições. Neste caso o SimpleStrategy é o padrão, ele irá criar o número de réplicas especificado no parâmetros replication_factor. Aqui colocaremos 2 tendo em vista que temos dois nós. Isso indica que haverá duas cópias de cada linha no cluster do Cassandra, e que cada cópia está em um nó diferente.
+Para criar o Keyspace utilizaremos o comando abaixo. nele passaremos dois parâmetros, o primeiro indica o método de replicação que será utilizado para distribuir as réplicas das partições. Neste caso o SimpleStrategy é o padrão, ele irá criar o número de réplicas especificado no parâmetros replication_factor. Aqui colocaremos 1 tendo em vista que temos um nó.
 
 ```sql
-create keyspace if not exists "default_keyspace" with replication = {'class': 'SimpleStrategy', 'replication_factor': 2};
+create keyspace if not exists "default_keyspace" with replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
 ```
 
 Com o Keyspace criado, iremos criar uma tabela dentro dele. O comando de criação da tabela é semelhante ao SQL, diferenciado principalmente nos tipos de dados:
